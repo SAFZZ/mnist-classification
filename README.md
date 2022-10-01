@@ -5,27 +5,42 @@
 To Develop a convolutional deep neural network for digit classification and to verify the response for scanned handwritten images.
 
 ## Problem Statement and Dataset
-To Develop a convolutional deep neural network for digit classification and to verify the response for scanned handwritten images the dataset contains 70000 samples which is generated from tensorflow
+
+The MNIST dataset is a collection of handwritten digits. The task is to classify a given image of a handwritten digit into one of 10 classes representing integer values from 0 to 9, inclusively. The dataset has a collection of 60,000 handwrittend digits of size 28 X 28. Here we build a convolutional neural network model that is able to classify to it's appropriate numerical value.
+
+![image](https://user-images.githubusercontent.com/75235293/190975763-7d3b7c0f-9458-41e9-a35c-aa063c4977da.png)
+
 
 ## Neural Network Model
 
-Include the neural network model diagram.
+![image](https://user-images.githubusercontent.com/75235293/190976591-e7be8aea-1886-4181-b490-2abde39f2ff6.png)
+
 
 ## DESIGN STEPS
-
-### STEP 1:
+### STEP-1:
 Import tensorflow and preprocessing libraries
-
 ### STEP 2:
-Build a CNN model
-
+Download and load the dataset
 ### STEP 3:
-Compile and fit the model and then predict
-
-
+Scale the dataset between it's min and max values
+### STEP 4:
+Using one hot encode, encode the categorical values
+### STEP-5:
+Split the data into train and test
+### STEP-6:
+Build the convolutional neural network model
+### STEP-7:
+Train the model with the training data
+### STEP-8:
+Plot the performance plot
+### STEP-9:
+Evaluate the model with the testing data
+### STEP-10:
+Fit the model and predict the single input
 
 ## PROGRAM
-```python3
+
+```
 import numpy as np
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -36,65 +51,97 @@ from tensorflow.keras import utils
 import pandas as pd
 from sklearn.metrics import classification_report,confusion_matrix
 from tensorflow.keras.preprocessing import image
-
 (X_train, y_train), (X_test, y_test) = mnist.load_data()
-
+X_train.shape
+X_test.shape
+single_image= X_train[0]
+single_image.shape
+plt.imshow(single_image,cmap='gray')
+y_train.shape
+X_train.min()
+X_train.max()
 X_train_scaled = X_train/255.0
 X_test_scaled = X_test/255.0
-
+X_train_scaled.min()
+X_train_scaled.max()
+y_train[0]
 y_train_onehot = utils.to_categorical(y_train,10)
 y_test_onehot = utils.to_categorical(y_test,10)
-
+type(y_train_onehot)
+y_train_onehot.shape
+single_image = X_train[500]
+plt.imshow(single_image,cmap='gray')
+y_train_onehot[500]
 X_train_scaled = X_train_scaled.reshape(-1,28,28,1)
 X_test_scaled = X_test_scaled.reshape(-1,28,28,1)
-
-np.unique(y_test)
-
-model = keras.Sequential([
-    tf.keras.layers.Conv2D(32,kernel_size=3,activation="relu",padding="same"),
-    tf.keras.layers.MaxPool2D(),
-    tf.keras.layers.Conv2D(32,kernel_size=3,activation="relu"),
-    tf.keras.layers.MaxPool2D(),
-    tf.keras.layers.Conv2D(32,kernel_size=3,activation="relu"),
-    tf.keras.layers.MaxPool2D(),
-    tf.keras.layers.Flatten(),
-    tf.keras.layers.Dense(10,activation="softmax")
-])
-
-model.compile(loss="categorical_crossentropy", metrics='accuracy',optimizer="adam")
-
-model.fit(X_train_scaled ,y_train_onehot, epochs=2,
+model=keras.Sequential()
+model.add(layers.Input(shape=(28,28,1)))
+model.add(layers.Conv2D(filters=32,kernel_size=(3,3),activation='relu'))
+model.add(layers.MaxPool2D(pool_size=(2,2)))
+model.add(layers.Flatten())
+model.add(layers.Dense(32,activation='relu'))
+model.add(layers.Dense(10,activation='softmax'))
+model.summary()
+# Choose the appropriate parameters
+model.compile(loss='categorical_crossentropy',
+              optimizer='adam',
+              metrics='accuracy')
+model.fit(X_train_scaled ,y_train_onehot, epochs=5,
           batch_size=64, 
           validation_data=(X_test_scaled,y_test_onehot))
-
-pd.DataFrame(model.history.history).plot()
-
+          
+metrics = pd.DataFrame(model.history.history)
+metrics.head()
+metrics[['accuracy','val_accuracy']].plot()
+metrics[['loss','val_loss']].plot()
 x_test_predictions = np.argmax(model.predict(X_test_scaled), axis=1)
-
-confusion_matrix(y_test,x_test_predictions)
-
+print(confusion_matrix(y_test,x_test_predictions))
 print(classification_report(y_test,x_test_predictions))
-
-img = image.load_img('imagefive.jpg')
+img = image.load_img('image5.jpeg')
+type(img)
+img = image.load_img('image5.jpeg')
 img_tensor = tf.convert_to_tensor(np.asarray(img))
 img_28 = tf.image.resize(img_tensor,(28,28))
 img_28_gray = tf.image.rgb_to_grayscale(img_28)
 img_28_gray_scaled = img_28_gray.numpy()/255.0
-
-np.argmax(model.predict(img_28_gray_scaled.reshape(1,28,28,1)),axis=1)
+x_single_prediction = np.argmax(
+    model.predict(img_28_gray_scaled.reshape(1,28,28,1)),
+     axis=1)
+     
+print(x_single_prediction)
+plt.imshow(img_28_gray_scaled.reshape(28,28),cmap='gray')
+img_28_gray_inverted = 255.0-img_28_gray
+img_28_gray_inverted_scaled = img_28_gray_inverted.numpy()/255.0
+x_single_prediction = np.argmax(
+    model.predict(img_28_gray_inverted_scaled.reshape(1,28,28,1)),
+     axis=1)
+     
+print(x_single_prediction)
 ```
 
 ## OUTPUT
 
-![image](https://user-images.githubusercontent.com/70213227/190917362-fae61356-e007-4cf4-849d-e702cb9ab31b.png)
+### Training Loss, Validation Loss Vs Iteration Plot
+![image](https://user-images.githubusercontent.com/75235293/190924667-8851a913-839f-4dd6-be82-2848123918c4.png)
+
+![image](https://user-images.githubusercontent.com/75235293/190924528-4f4bcc43-fe15-4259-a841-12f6c2600652.png)
+
+
 ### Classification Report
 
-![image](https://user-images.githubusercontent.com/70213227/190917380-e0693a3f-8210-49a6-b656-5309e771c1da.png)
+![2](https://user-images.githubusercontent.com/75235293/190924746-4230cb47-c82b-4791-85a2-51d8c73bb622.png)
+
+
 ### Confusion Matrix
-![image](https://user-images.githubusercontent.com/70213227/190917403-86929f91-d7bc-476d-ad5b-4b7d2d7fd1cd.png)
+
+![2](https://user-images.githubusercontent.com/75235293/190924726-1fae4386-ba09-43ce-aec1-7ad9ab3934f7.png)
+
+
+
 ### New Sample Data Prediction
 
-![image](https://user-images.githubusercontent.com/70213227/190917418-b6d8d98e-06bd-4507-ad19-e05cca740f60.png)
+![1](https://user-images.githubusercontent.com/75235293/190924650-55f4761f-f5e0-470d-aa38-7244002deb78.png)
+
 
 ## RESULT
 Thus a convolutional deep neural network for digit classification and to verify the response for scanned handwritten images is written and executed successfully
